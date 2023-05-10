@@ -1,0 +1,106 @@
+-- 基本のサンプル再生のテスト
+d1 $ sound "bd [hc cp] [~ bd] bd"
+
+d1 $ sound "[bd [cp hc]*2]/2 [bd [hc bd]/2]*2"
+
+d1 silence
+
+d2 silence
+
+d1 $ iter 4 $ sound "bs cp bass hc"
+
+-- 同一のループに対し、複数の関数を適応してみる
+d1 $ jux (0.25 <~) $ sound "bd*2 [cp*2 hc*3]"
+
+d1 $ every 4 (rev) $ sound "bd*2 [cp*2 hc*3]"
+
+d1 $ whenmod 8 6 (fast 2) $ sound "bd*2 [cp*2 hc*3]"
+
+
+-- 確率で変化させる
+d1 $ sometimesBy 0.2 (rev) $ sound "bd*2 [cp*2 hc*3]"
+--sometimesBy 確率を手動で入力。以下の関数を使えば、事前に設定された確率が使える
+--sometimes, often, rarely, almostNever, almostAlways
+--0.5, 0.75, 0.25, 0.1, 0.9
+
+-- 複数の変形を適応
+d1
+  $ rev
+  $ slow 2
+  $ sound "bd*2 [cp*2 hc*3]"
+
+d1
+  $ often (rev)
+  $ whenmod 8 6 (slow 2)
+  $ every 4 (0.125 <~)
+  $ rarely (jux (iter 4))
+  $ sound "bd*2 [cp*2 hc*3]"
+
+
+-- リズムパターンにエフェクトを適用
+d1
+  $ sound "bd*2 [cp*2 hc*3]"
+  # gain "1.3 [0.9 0.6]"
+  # pan "0.5 [0.1 0.9]"
+  # delay "0.5"
+  # delaytime "0.125"
+  # delayfeedback "0.7"
+  # lpf "800 8000 800 15000"
+  # resonance "0.1 0.3 0.2 0.4"
+  # shape "0.7"
+  # vowel "u a i e"
+
+-- アルゴリズミックなパターン生成
+d1
+  $ jux ((choose[0.125, 0.25, 0.5]) <~ )
+  $ sound "[bd(3, 8), cp(3, 8, 3), table2(5, 8, 4)]"
+  # pan(rand)
+  # n (irand 12)
+  # up (choose [0, 4, 5, 7])
+
+-- 変数の活用
+do
+  let
+    inverse 1 = 0
+    inverse 0 = 1
+    pat1 = "[1 0 1 0 1 1 0 0]"
+    pat2 = "{1 0 1 0 1/2 1 0 0 1}%8"
+  d1
+    $ sometimesBy 0.3 (jux (0.125 ~>))
+    $ whenmod 4 3 (0.25 ~>)
+    $ gain pat2
+    # sound "bd"
+  d2
+    $ sometimesBy 0.4 (jux (0.125 <~))
+    $ whenmod 3 2 (0.25 ~>)
+    $ gain (inverse <$> pat1)
+    # sound "bd"
+
+
+-- 実践的な構造を作る
+do
+  let
+    pat = "{1 0/2 1 0 1 0 1/2 1 0 0 1/3}%8"
+    inverse 1 = 0
+    inverse 0 = 1
+  d1
+    $ whenmod 16 15 (rev)
+    $ sometimesBy 0.4 (jux (0.125 ~>))
+    $ almostNever (0.125 <~)
+    $ stack [
+      sound "bd:3*2" # gain "1.7" ,
+      -- # vowel "u a i e",
+      sound "ifdrums(5, 8)" # n "{0 1 2 3}%8",
+      sound "~ [cp hc] ~ bass",
+      gain pat # sound "glitch" # n (irand 20),
+      gain (inverse <$> pat) # sound "super808" # n (irand 12),
+      sound "superzow(3, 8, {0, 3})"
+        # n ("{0, <4 5>/4, <7 9>/8}" - "{19, 12, 5, 0}" + "<0 4 7 9>/16")
+        # sustain "{0.2 0.125 0.1}%8"
+        # gain "0.7"
+    ]
+    # delay "0.5" # delaytime (choose [1/2, 1/4]) #delayfeedback "0.5"
+    # room "0.2" # size "0.4"
+    # shape "0.7"
+
+hush
