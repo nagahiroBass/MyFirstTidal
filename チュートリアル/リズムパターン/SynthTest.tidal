@@ -1,0 +1,8 @@
+d1 $ sound "supersaw*4" 
+  # n "c5"
+
+  d1 silence
+
+d2 $ sound "cp"
+
+hush
