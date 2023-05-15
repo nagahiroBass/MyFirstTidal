@@ -1,0 +1,7 @@
+  d1 $ s "909!4"
+
+  d2 $ every 2 rev $ n "0 2 4 7" # s "midi" # midichan "4"
+
+  d3 $ n "0 2 4 7" # s "midi" # midichan "3"
+
+  hush
